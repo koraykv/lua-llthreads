@@ -1,3 +1,8 @@
+
+# lua-llthreads fork for Torch7
+
+For details of the project, please go to [Original lua-llthreads](https://github.com/Neopallium/lua-llthreads). This fork is only to replace the CMakeLists.txt file to make it install with torch-pkg.
+
 About
 =====
 
