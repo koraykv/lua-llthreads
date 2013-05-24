@@ -1,5 +1,6 @@
--- Add the path to llthreads.so if needed.
---package.cpath = package.cpath .. ';/opt/torch/lib/lua/5.1/?.so'
+
+-- run this with 
+-- torch-lua random_threads.lua
 
 local llthreads = require "llthreads"
 
