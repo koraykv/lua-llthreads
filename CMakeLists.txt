@@ -1,26 +1,27 @@
 #
 # A simple low-level Lua wrapper for pthreads.
 #
-cmake_minimum_required(VERSION 2.8)
 
-project(lua-llthreads C)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
+CMAKE_POLICY(VERSION 2.6)
+IF(LUAROCKS_PREFIX)
+    MESSAGE(STATUS "Installing Torch through Luarocks")
+    STRING(REGEX REPLACE "(.*)lib/luarocks/rocks.*" "\\1" CMAKE_INSTALL_PREFIX  "${LUAROCKS_PREFIX}")
+    MESSAGE(STATUS "Prefix inferred from Luarocks: ${CMAKE_INSTALL_PREFIX}")
+ENDIF()
+FIND_PACKAGE(Torch REQUIRED)
 
-set(BUILD_SHARED_LIBS TRUE)
+SET(src src/pre_generated-llthreads.nobj.c)
 
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+SET(luasrc)
 
-set(INSTALL_CMOD ${CMAKE_INSTALL_PREFIX}/lib/lua/5.1 CACHE PATH
-				"Directory to install Lua binary modules (configure lua via LUA_CPATH)")
 
-set(COMMON_CFLAGS "${CFLAGS}")
-set(COMMON_LDFLAGS)
-set(COMMON_LIBS)
+SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-## Lua 5.1.x
-include(FindLua51)
-if(NOT ${LUA51_FOUND})
-    message(FATAL_ERROR "The FindLua51 module could not find lua :-(")
-endif()
+SET(COMMON_CFLAGS "${CFLAGS}")
+SET(COMMON_LDFLAGS)
+SET(COMMON_LIBS)
+
 if(WIN32)
 	set(COMMON_CFLAGS "${COMMON_CFLAGS} -I${LUA_INCLUDE_DIR}")
 	set(COMMON_LDFLAGS "${COMMON_LDFLAGS} ${LUA_LIBRARY}")
@@ -39,29 +40,19 @@ include(CustomMacros)
 ## LuaNativeObjects
 include(LuaNativeObjects)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}
-                    ${CMAKE_CURRENT_BINARY_DIR}
-                    ${LUA_INCLUDE_DIR})
-
-## LuaLLTHREADS
-set(LUA_LLTHREADS_SRC
-	llthreads.nobj.lua
-)
-
-if(${USE_PRE_GENERATED_BINDINGS})
+IF(USE_PRE_GENERATED_BINDINGS)
 	set(LUA_LLTHREADS_SRC src/pre_generated-llthreads.nobj.c)
-else()
+ELSE()
 	# Generate Lua bindings.
 	GenLuaNativeObjects(LUA_LLTHREADS_SRC)
-endif()
+ENDIF()
 
-add_library(lua-llthreads MODULE ${LUA_LLTHREADS_SRC})
-target_link_libraries(lua-llthreads ${COMMON_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-set_target_properties(lua-llthreads PROPERTIES PREFIX "")
-add_target_properties(lua-llthreads COMPILE_FLAGS "${COMMON_CFLAGS}")
-add_target_properties(lua-llthreads LINK_FLAGS "${LD_FLAGS} ${COMMON_LDFLAGS}")
-set_target_properties(lua-llthreads PROPERTIES OUTPUT_NAME llthreads)
+INCLUDE_DIRECTORIES(${Torch_SOURCE_INCLUDES})
+ADD_TORCH_PACKAGE(llthreads "${src}"  "${luasrc}" "Low Level Threading")
+TARGET_LINK_LIBRARIES(llthreads ${COMMON_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 
-install(TARGETS lua-llthreads
-        DESTINATION "${INSTALL_CMOD}")
+set_target_properties(llthreads PROPERTIES PREFIX "")
+add_target_properties(llthreads COMPILE_FLAGS "${COMMON_CFLAGS}")
+add_target_properties(llthreads LINK_FLAGS "${LD_FLAGS} ${COMMON_LDFLAGS}")
+set_target_properties(llthreads PROPERTIES OUTPUT_NAME llthreads)
 
