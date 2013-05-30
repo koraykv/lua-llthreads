@@ -10,9 +10,15 @@ local thread_code = [[
 
     require 'torch-env'
     require 'torch'
-    local mean = torch.randn(1000):add(100):mean()
+    torch.manualSeed(1)
+    local mean = torch.randn(1000000):add(100):mean()
     return mean
 ]]
+
+require 'torch'
+
+torch.manualSeed(1)
+local expectedMean = torch.randn(1000000):add(100):mean()
 
 local nChildren = 10
 local children = {}
@@ -22,7 +28,16 @@ for i = 1, nChildren do
     children[i] = child
 end
 
-for _, child in ipairs(children) do
-    print("PARENT: child returned: ", child:join())
+local results = {}
+for i, child in ipairs(children) do
+    local result = {child:join()}
+    results[i] = result
+    print("PARENT: child returned: ", unpack(result))
+end
+
+for i, result in ipairs(results) do
+    assert(results[i][1] == true, "expecting success")
+    assert(results[i][2] == expectedMean,
+        string.format("wrong result: %s ~= %s", results[i][2], expectedMean))
 end
 
