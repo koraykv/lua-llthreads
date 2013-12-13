@@ -50,7 +50,7 @@ function thread_func(...)
     --require 'torch-env'
     require 'torch'
     require 'nn'
-    nn.test()
+    --nn.test()
     return {0,0,0}
 end
 
